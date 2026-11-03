@@ -4,7 +4,7 @@ Site acadêmico da Visualize Studio, criado a partir da identidade e das mídias
 
 ## Executar
 
-Node.js 22.13 ou superior.
+Node.js 22.x.
 
 No Windows, depois de instalar o Node.js, dê dois cliques em `ABRIR_SITE.bat`. Na primeira execução, o instalador baixa as dependências e abre o site em `http://localhost:5173`.
 
@@ -16,6 +16,12 @@ npm run dev
 ```
 
 A prévia usa http://localhost:5173. Para gerar a versão de produção: `npm run build`.
+
+## Publicar na Vercel
+
+Importe este repositório com o preset Next.js e a raiz nesta pasta. O arquivo `vercel.json` configura `npm run build` e a saída `.next`. O build usa Next.js nativo; os scripts antigos de Vinext/Cloudflare não fazem parte da publicação na Vercel. Use `npm start` para testar a versão de produção após o build.
+
+Páginas disponíveis: `/`, `/fotografia` e `/antes-e-depois`.
 
 ## Experiência
 
