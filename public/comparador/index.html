@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#11191f">
+  <title>Antes & Depois — Visualize Studio</title>
+  <link rel="stylesheet" href="estilos.css">
+  <script src="dados.js" defer></script><script src="apresentacao.js" defer></script>
+</head>
+<body>
+  <header class="masthead"><a class="brand" href="index.html" aria-label="Visualize Studio — início"><img src="assets/logo.svg" alt="Visualize Studio"></a><span class="edition">PROCESSO VISUALIZE <i></i> 2026</span><a class="home-link" href="/" target="_top">← Voltar ao estúdio</a><button id="present" class="outline">↗ Apresentar</button></header>
+  <main>
+    <section class="intro"><div><p class="eyebrow">DA CAPTURA À IMAGEM FINAL</p><h1>O mesmo instante.<br><em>Uma nova leitura.</em></h1></div><div class="intro-note"><span class="tiny-number">01 — 60</span><p>Um olhar sobre luz, cor e cenário.<br>Arraste a divisória e descubra o que mudou.</p><span class="offline">● PROCESSO CRIATIVO</span></div></section>
+    <div class="workspace">
+      <aside class="library" aria-label="Seleção de fotografias">
+        <div class="library-head"><h2>Os ensaios</h2><span id="total">60 FOTOS</span></div>
+        <div id="models" class="segmented" aria-label="Modelo"><button data-model="Lucas" aria-pressed="true">Lucas <small>40</small></button><button data-model="Paulo" aria-pressed="false">Paulo <small>20</small></button></div>
+        <div id="groups" class="filters" aria-label="Ambiente"><button data-group="todos" aria-pressed="true">Todas</button><button data-group="interno" aria-pressed="false">Internas</button><button data-group="externo" aria-pressed="false">Externas</button></div>
+        <p id="direction" class="direction">Retrato profissional · luz suave e cenário orgânico.</p>
+        <div id="thumbnails" class="thumbnails"></div>
+        <p class="library-foot">Seleção apresentada no álbum dos clientes.</p>
+      </aside>
+      <section class="viewer" id="viewer" aria-label="Comparador antes e depois">
+        <div class="viewer-bar"><div><span id="category" class="eyebrow">LUCAS / INTERNO</span><h2 id="photo-title">Fotografia 01</h2></div><span id="count" class="count" aria-live="polite">01 / 40</span></div>
+        <div class="stage" id="stage">
+          <div class="image-frame" id="image-frame">
+            <img id="after" class="comparison-img" alt="Fotografia editada" draggable="false">
+            <img id="before" class="comparison-img before" alt="Fotografia original" draggable="false">
+            <div class="divider" id="divider" aria-hidden="true"><span>‹ ›</span></div>
+            <input id="slider" class="slider" type="range" min="0" max="100" value="50" aria-label="Comparar: percentual da foto original" aria-valuetext="50% original, 50% editada">
+            <span class="image-label label-before">ANTES</span><span class="image-label label-after">DEPOIS</span>
+          </div>
+          <p id="image-error" hidden>Não foi possível carregar esta imagem. Mantenha a pasta assets junto ao HTML.</p>
+        </div>
+        <div class="viewer-controls"><div class="modes" aria-label="Modo de visualização"><button data-value="100" aria-pressed="false">Original</button><button data-value="50" aria-pressed="true">Comparar</button><button data-value="0" aria-pressed="false">Editada</button></div><div class="navigation"><button id="prev" aria-label="Foto anterior">←</button><button id="next" aria-label="Próxima foto">→</button></div></div>
+        <div class="photo-info"><p><strong id="filename"></strong><span id="source-note"></span></p><span class="hint">← → fotos &nbsp; · &nbsp; F apresentar &nbsp; · &nbsp; Esc sair</span></div>
+      </section>
+    </div>
+    <footer><span>VISUALIZE STUDIO</span><p>Originais e versões finais, lado a lado.<br>As imagens mantêm suas proporções; diferenças de enquadramento permanecem visíveis.</p><span>PROCESSO CRIATIVO / 2026</span></footer>
+  </main>
+</body>
+</html>
+

@@ -1,0 +1,35 @@
+VISUALIZE STUDIO — ANTES & DEPOIS
+
+COMO ABRIR
+Abra index.html com dois cliques em um navegador atualizado (Edge, Chrome ou Firefox).
+Não é preciso instalar nada, iniciar servidor ou estar conectado à internet.
+Para transportar, copie a pasta inteira. Mantenha os arquivos e a pasta assets juntos.
+
+COMO APRESENTAR
+O comparador ocupa uma única tela, sem rolagem e sem fundo preto ao redor das fotos.
+Escolha Lucas ou Paulo e filtre fotos internas ou externas.
+No celular, navegue pelas fotos com os botões anterior/próxima; as miniaturas ficam ocultas para dar mais espaço à imagem.
+Arraste a divisória sobre a fotografia para comparar o original (esquerda) e a edição (direita).
+Use Original / Comparar / Editada para alternar a visualização.
+As setas anterior/próxima percorrem as fotos do filtro atual.
+Tecla F ou botão Apresentar: apresentação em tela cheia. Esc: sair.
+Com foco no comparador (tecla Tab), as setas ajustam a divisória.
+
+CONTEÚDO
+60 pares: 40 do Lucas e 20 do Paulo, conforme a seleção do álbum dos clientes.
+Depois: cópias exatas dos JPEGs existentes no site album-visualize.
+Antes: JPEG original ou prévia JPEG embutida no CR2 pela câmera, convertida para exibição.
+Os arquivos CR2 não foram revelados novamente nem alterados.
+As cópias de apresentação dos originais têm até 1800 pixels no maior lado.
+Nenhuma nova correção de luz, cor, enquadramento ou anatomia foi aplicada às imagens.
+Cada imagem é exibida inteira, mantendo sua proporção; diferenças de crop e geometria da edição podem permanecer visíveis.
+
+CORRESPONDÊNCIAS
+correspondencias.json registra a relação entre o original, a exportação do álbum e as cópias desta apresentação.
+Lucas: relação pelo nome original no mapa do site.
+As fotos lucas-18 e lucas-19 tinham os nomes de origem invertidos no mapa do site; a associação nesta apresentação foi corrigida por conferência visual (18 = IMG_0410; 19 = IMG_0408).
+Paulo: relação conferida visualmente por pose, objetos e enquadramento.
+
+DEPENDÊNCIAS
+Todo o necessário está nesta pasta. Sem bibliotecas, fontes, música ou serviços externos.
+O site dos clientes e as pastas existentes de fotos originais/editadas não foram modificados.
