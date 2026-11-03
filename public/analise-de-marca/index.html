@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#243746">
+  <meta name="description" content="Visualize — diagnóstico experimental de alinhamento entre posicionamento de marca e percepção do público.">
+  <title>Análise de marca — Visualize</title>
+  <style>
+    :root {
+      --bg: #243746;
+      --bg-deep: #172936;
+      --surface: rgba(255,255,255,.065);
+      --surface-strong: rgba(255,255,255,.105);
+      --line: rgba(220,235,255,.16);
+      --line-blue: rgba(81,120,255,.42);
+      --blue: #4168e8;
+      --blue-light: #78a0ff;
+      --blue-pale: #a9c2ff;
+      --white: #f6f7fb;
+      --muted: #aebcca;
+      --green: #6edbb7;
+      --yellow: #f4c978;
+      --red: #ff8b96;
+      --radius: 24px;
+      --shadow: 0 24px 80px rgba(4,14,24,.28);
+      --ease: cubic-bezier(.2,.8,.2,1);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--white);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(65,104,232,.22), transparent 30rem),
+        radial-gradient(circle at 88% 38%, rgba(75,133,255,.12), transparent 28rem),
+        linear-gradient(145deg, var(--bg) 0%, var(--bg-deep) 100%);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .28;
+      background-image: linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(to bottom, black, transparent 75%);
+    }
+    button, input, textarea { font: inherit; }
+    button { color: inherit; }
+    a { color: inherit; text-decoration: none; }
+    :focus-visible { outline: 3px solid var(--blue-light); outline-offset: 3px; }
+    ::selection { background: var(--blue); color: #fff; }
+
+    .shell { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+    .app-header {
+      position: fixed;
+      z-index: 50;
+      top: 0; left: 0; right: 0;
+      backdrop-filter: blur(18px);
+      background: linear-gradient(to bottom, rgba(24,42,55,.92), rgba(24,42,55,.55));
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+    .header-inner { height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 28px; }
+    .brand { display: inline-flex; align-items: center; gap: 11px; font-size: 1.32rem; font-weight: 680; letter-spacing: -.035em; }
+    .brand small { font-size: .56rem; letter-spacing: .12em; font-weight: 700; color: var(--blue-pale); align-self: flex-start; margin-top: 6px; }
+    .logo-mark { width: 35px; height: 35px; display: block; filter: drop-shadow(0 7px 15px rgba(65,104,232,.34)); }
+    .nav { display: flex; align-items: center; gap: 28px; color: var(--muted); font-size: .9rem; }
+    .nav a { transition: color .2s; }
+    .nav a:hover { color: #fff; }
+    .nav-status { display: none; color: var(--blue-pale); font-size: .82rem; letter-spacing: .05em; text-transform: uppercase; }
+
+    main { position: relative; }
+    .view { display: none; min-height: 100vh; padding: 112px 0 56px; animation: viewIn .55s var(--ease) both; }
+    .view.active { display: block; }
+    @keyframes viewIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+    .eyebrow { margin: 0 0 15px; color: var(--blue-pale); font-size: .76rem; font-weight: 720; letter-spacing: .18em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 880px; font-size: clamp(3rem, 7vw, 6.2rem); line-height: .98; letter-spacing: -.068em; font-weight: 620; margin-bottom: 26px; }
+    h1 em { font-style: normal; color: var(--blue-light); }
+    h2 { font-size: clamp(2rem, 4.2vw, 3.8rem); line-height: 1.04; letter-spacing: -.052em; font-weight: 610; }
+    h3 { font-size: 1.06rem; letter-spacing: -.02em; }
+    .lead { max-width: 650px; color: #c3cfda; font-size: clamp(1.05rem, 2vw, 1.24rem); }
+    .subtle { color: var(--muted); }
+    .micro { color: var(--muted); font-size: .76rem; }
+
+    .btn {
+      border: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 50px;
+      padding: 0 21px;
+      border-radius: 999px;
+      font-size: .79rem;
+      font-weight: 760;
+      letter-spacing: .075em;
+      text-transform: uppercase;
+      transition: transform .25s var(--ease), box-shadow .25s, background .25s, border-color .25s;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn:active { transform: translateY(0); }
+    .btn-primary { color: #fff; background: linear-gradient(135deg, #547bff, #3158d7); box-shadow: 0 12px 32px rgba(42,80,211,.36), inset 0 1px rgba(255,255,255,.26); }
+    .btn-primary:hover { box-shadow: 0 16px 42px rgba(42,80,211,.5), inset 0 1px rgba(255,255,255,.3); }
+    .btn-ghost { background: rgba(255,255,255,.045); border: 1px solid var(--line); }
+    .btn-ghost:hover { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.28); }
+    .btn-link { background: transparent; color: var(--muted); padding-inline: 8px; }
+    .btn-link:hover { color: #fff; }
+    .btn[disabled] { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+    .arrow { font-size: 1.15rem; line-height: 1; }
+
+    .hero { min-height: calc(100vh - 168px); display: grid; grid-template-columns: 1.13fr .87fr; align-items: center; gap: clamp(36px, 6vw, 84px); }
+    .hero-copy { padding: 34px 0; position: relative; z-index: 2; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
+    .hero-note { display: flex; gap: 22px; margin-top: 34px; color: var(--muted); font-size: .78rem; }
+    .hero-note span::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--blue-light); margin-right: 8px; box-shadow: 0 0 12px var(--blue); }
+    .hero-visual { position: relative; min-height: 535px; display: grid; place-items: center; }
+    .orb {
+      position: absolute; width: 410px; height: 410px; border-radius: 50%;
+      background: radial-gradient(circle at 42% 38%, rgba(108,148,255,.32), rgba(46,80,188,.09) 55%, transparent 70%);
+      filter: blur(1px); animation: breathe 6s ease-in-out infinite;
+    }
+    @keyframes breathe { 50% { transform: scale(1.08); opacity: .72; } }
+    .brand-sculpture {
+      width: min(410px, 88vw); position: relative; z-index: 1;
+      filter: drop-shadow(0 40px 38px rgba(5,15,28,.36));
+      animation: float 7s ease-in-out infinite;
+    }
+    @keyframes float { 50% { transform: translateY(-14px) rotate(.5deg); } }
+    .mini-comparison {
+      position: absolute; z-index: 3; right: -20px; bottom: 15px; width: min(390px, 90%);
+      padding: 20px; border-radius: 22px; backdrop-filter: blur(20px);
+      background: linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.035));
+      border: 1px solid rgba(255,255,255,.17); box-shadow: var(--shadow);
+    }
+    .comparison-row { display: grid; grid-template-columns: 1fr 35px 1fr; align-items: center; gap: 10px; }
+    .comparison-side small { color: var(--muted); font-size: .65rem; text-transform: uppercase; letter-spacing: .12em; }
+    .comparison-side strong { display: block; margin-top: 7px; font-size: .87rem; line-height: 1.85; letter-spacing: .04em; }
+    .comparison-side:last-child strong { color: var(--blue-pale); }
+    .compare-eye { display: grid; place-items: center; color: var(--blue-light); font-size: 1.35rem; }
+
+    .method-strip { padding: 96px 0 110px; scroll-margin-top: 80px; }
+    .method-head { display: flex; justify-content: space-between; gap: 40px; align-items: flex-end; margin-bottom: 34px; }
+    .method-head h2 { max-width: 650px; margin-bottom: 0; }
+    .method-head p { max-width: 370px; margin-bottom: 4px; }
+    .method-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .method-card, .glass {
+      background: linear-gradient(145deg, rgba(255,255,255,.085), rgba(255,255,255,.025));
+      border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 18px 45px rgba(5,18,28,.14);
+      backdrop-filter: blur(14px);
+    }
+    .method-card { min-height: 210px; padding: 24px; position: relative; overflow: hidden; }
+    .method-card::after { content: ""; position: absolute; width: 90px; height: 90px; background: var(--blue); border-radius: 50%; filter: blur(65px); opacity: .16; right: -20px; bottom: -20px; }
+    .method-num { color: var(--blue-light); font-size: .75rem; letter-spacing: .15em; }
+    .method-card h3 { margin: 42px 0 10px; }
+    .method-card p { color: var(--muted); font-size: .88rem; margin: 0; }
+
+    .wizard-wrap { max-width: 980px; margin: 0 auto; }
+    .progress { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin: 0 0 36px; }
+    .progress-item { color: #8293a2; font-size: .69rem; text-transform: uppercase; letter-spacing: .09em; }
+    .progress-item::before { content: ""; display: block; height: 3px; margin-bottom: 10px; border-radius: 99px; background: rgba(255,255,255,.1); transition: .4s; }
+    .progress-item.done, .progress-item.current { color: var(--white); }
+    .progress-item.done::before { background: var(--blue-light); }
+    .progress-item.current::before { background: linear-gradient(90deg, var(--blue-light) 55%, rgba(255,255,255,.1) 55%); box-shadow: 0 0 14px rgba(85,120,255,.5); }
+    .step-card { padding: clamp(26px, 5vw, 56px); min-height: 545px; }
+    .step { display: none; animation: stepIn .45s var(--ease); }
+    .step.active { display: block; }
+    @keyframes stepIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+    .step-heading { max-width: 700px; margin-bottom: 36px; }
+    .step-heading h2 { margin-bottom: 14px; }
+    .step-heading p { color: var(--muted); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .field { display: grid; gap: 8px; }
+    .field.full { grid-column: 1 / -1; }
+    label { font-size: .76rem; text-transform: uppercase; letter-spacing: .1em; color: #c2ced8; font-weight: 650; }
+    input, textarea {
+      width: 100%; color: #fff; background: rgba(7,20,31,.3); border: 1px solid var(--line); border-radius: 14px; padding: 15px 16px;
+      transition: border .2s, box-shadow .2s; outline: none;
+    }
+    input { height: 52px; }
+    textarea { min-height: 112px; resize: vertical; }
+    input:focus, textarea:focus { border-color: var(--blue-light); box-shadow: 0 0 0 4px rgba(65,104,232,.14); }
+    input::placeholder, textarea::placeholder { color: #708493; }
+    .validation { min-height: 20px; margin: 8px 0 0; color: var(--red); font-size: .8rem; }
+    .step-actions { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-top: 34px; }
+    .step-actions-right { display: flex; gap: 10px; margin-left: auto; }
+
+    .attribute-group + .attribute-group { margin-top: 24px; }
+    .group-title { margin-bottom: 10px; color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .13em; }
+    .chips { display: flex; flex-wrap: wrap; gap: 9px; }
+    .chip {
+      position: relative; border: 1px solid var(--line); background: rgba(255,255,255,.038); border-radius: 13px; padding: 11px 15px;
+      cursor: pointer; color: #d6dfe7; font-size: .86rem; transition: .22s var(--ease);
+    }
+    .chip:hover { border-color: rgba(120,160,255,.5); background: rgba(65,104,232,.09); }
+    .chip.selected { background: linear-gradient(135deg, rgba(80,119,255,.32), rgba(65,104,232,.12)); border-color: var(--blue-light); color: #fff; box-shadow: 0 8px 25px rgba(31,66,175,.22), inset 0 1px rgba(255,255,255,.1); }
+    .chip.selected::before { content: "✓"; margin-right: 7px; color: #bdd0ff; }
+    .selection-count { margin: 15px 0 0; color: var(--blue-pale); font-size: .78rem; }
+
+    .goal-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .goal-card { text-align: left; min-height: 116px; padding: 20px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.035); cursor: pointer; transition: .23s; }
+    .goal-card:hover { transform: translateY(-2px); background: rgba(255,255,255,.065); }
+    .goal-card.selected { border-color: var(--blue-light); background: linear-gradient(145deg, rgba(65,104,232,.24), rgba(65,104,232,.055)); box-shadow: 0 12px 30px rgba(20,45,135,.18); }
+    .goal-card strong { display: block; margin-bottom: 7px; }
+    .goal-card span { color: var(--muted); font-size: .82rem; }
+
+    .feedback-meta { display: flex; justify-content: space-between; gap: 16px; margin-top: 10px; }
+    #feedbackInput { min-height: 235px; line-height: 1.7; }
+    .sample-badge { color: var(--blue-pale); }
+
+    #loadingView { padding: 0; }
+    .loading-center { min-height: 100vh; display: grid; place-items: center; text-align: center; padding: 40px 20px; }
+    .loading-content { max-width: 540px; }
+    .loader-logo { width: 150px; margin: 0 auto 38px; filter: drop-shadow(0 20px 36px rgba(53,93,226,.38)); }
+    .loader-logo .piece { transform-origin: center; animation: assemble 1.4s var(--ease) infinite alternate; }
+    .loader-logo .left { transform-origin: 34px 50px; }
+    .loader-logo .right { transform-origin: 86px 50px; animation-delay: .12s; }
+    .loader-logo .eye { transform-origin: 60px 22px; animation-delay: .24s; }
+    @keyframes assemble { from { transform: translateY(8px) scale(.92); opacity: .45; } to { transform: none; opacity: 1; } }
+    #loadingText { color: var(--blue-pale); font-size: .82rem; text-transform: uppercase; letter-spacing: .16em; min-height: 24px; }
+    .loading-track { height: 3px; margin: 24px auto 0; max-width: 320px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.1); }
+    .loading-track span { display: block; height: 100%; width: 42%; background: linear-gradient(90deg, transparent, var(--blue-light), transparent); animation: scan 1.1s linear infinite; }
+    @keyframes scan { from { transform: translateX(-110%); } to { transform: translateX(340%); } }
+
+    .dashboard { padding-top: 104px; }
+    .dashboard-top { display: flex; justify-content: space-between; gap: 25px; align-items: end; margin-bottom: 26px; }
+    .dashboard-top h2 { margin: 0 0 8px; }
+    .dashboard-top .btn { flex: none; }
+    .dashboard-grid { display: grid; grid-template-columns: repeat(12,1fr); gap: 16px; }
+    .panel { padding: 24px; min-width: 0; }
+    .panel-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .panel-title h3 { margin: 0; }
+    .panel-kicker { color: var(--blue-pale); font-size: .66rem; letter-spacing: .13em; text-transform: uppercase; }
+    .score-panel { grid-column: span 4; min-height: 360px; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+    .score-panel::before { content:""; position:absolute; width:260px; height:260px; right:-90px; top:-85px; border-radius:50%; background:rgba(65,104,232,.28); filter:blur(65px); }
+    .score-ring { width: 186px; height: 186px; margin: 5px auto 18px; position: relative; display: grid; place-items: center; }
+    .score-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+    .score-ring circle { fill: none; stroke-width: 7; }
+    .score-track { stroke: rgba(255,255,255,.09); }
+    .score-value { stroke: url(#scoreGradient); stroke-linecap: round; stroke-dasharray: 515; stroke-dashoffset: 515; transition: stroke-dashoffset 1.5s var(--ease); filter: drop-shadow(0 0 8px rgba(100,145,255,.6)); }
+    .score-number { font-size: 3.5rem; font-weight: 620; letter-spacing: -.065em; }
+    .score-number small { display: block; margin-top: -12px; text-align: center; color: var(--muted); font-size: .7rem; letter-spacing: .1em; }
+    .score-label { text-align: center; margin: 0 0 5px; }
+    .score-label strong { color: var(--blue-pale); }
+    .score-panel .micro { text-align: center; margin-top: auto; }
+
+    .summary-panel { grid-column: span 8; min-height: 360px; display: grid; grid-template-rows: auto 1fr auto; }
+    .summary-text { max-width: 680px; font-size: clamp(1.3rem, 2.5vw, 2rem); line-height: 1.24; letter-spacing: -.03em; align-self: center; }
+    .sample-quality { display: flex; gap: 10px; align-items: flex-start; padding-top: 17px; border-top: 1px solid var(--line); color: var(--muted); font-size: .8rem; }
+    .info-dot { width: 18px; height: 18px; border: 1px solid var(--line-blue); color: var(--blue-pale); border-radius: 50%; flex: none; display: grid; place-items: center; font-size: .68rem; }
+
+    .compare-panel { grid-column: span 7; }
+    .radar-panel { grid-column: span 5; }
+    .metric-row { margin-bottom: 18px; }
+    .metric-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 7px; font-size: .79rem; }
+    .metric-head strong { font-size: .82rem; }
+    .metric-head span { color: var(--muted); }
+    .dual-track { position: relative; height: 10px; border-radius: 99px; background: rgba(255,255,255,.065); overflow: hidden; }
+    .desired-bar, .perceived-bar { position: absolute; left: 0; top: 0; height: 100%; border-radius: 99px; transform-origin: left; animation: grow 1s var(--ease) both; }
+    .desired-bar { background: rgba(255,255,255,.15); border-right: 1px solid rgba(255,255,255,.7); }
+    .perceived-bar { height: 5px; top: 2.5px; background: linear-gradient(90deg, var(--blue), var(--blue-light)); box-shadow: 0 0 9px rgba(65,104,232,.65); }
+    @keyframes grow { from { transform: scaleX(0); } }
+    .legend { display: flex; gap: 18px; margin-top: 23px; color: var(--muted); font-size: .7rem; }
+    .legend span::before { content:""; display:inline-block; width:12px; height:3px; margin-right:6px; vertical-align:middle; border-radius:2px; }
+    .legend .l-desired::before { background: rgba(255,255,255,.52); }
+    .legend .l-perceived::before { background: var(--blue-light); }
+    #radarChart { width: 100%; max-height: 330px; overflow: visible; }
+    .radar-grid { fill: none; stroke: rgba(255,255,255,.13); stroke-width: 1; }
+    .radar-axis { stroke: rgba(255,255,255,.09); }
+    .radar-desired { fill: rgba(255,255,255,.035); stroke: rgba(255,255,255,.55); stroke-width: 1.5; stroke-dasharray: 5 5; }
+    .radar-perceived { fill: rgba(65,104,232,.28); stroke: #78a0ff; stroke-width: 2; filter: drop-shadow(0 0 7px rgba(65,104,232,.4)); }
+    .radar-label { fill: #c5d0da; font-size: 10px; font-weight: 650; text-anchor: middle; text-transform: uppercase; }
+    .radar-point { fill: #9bb9ff; }
+
+    .findings-panel { grid-column: span 12; }
+    .findings-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+    .finding { padding: 19px; border: 1px solid var(--line); border-radius: 17px; background: rgba(255,255,255,.025); min-height: 165px; }
+    .finding-tag { display: inline-flex; gap: 7px; align-items: center; font-size: .63rem; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 20px; }
+    .finding-tag::before { content:""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 11px currentColor; }
+    .finding.force .finding-tag { color: var(--green); }
+    .finding.gap .finding-tag { color: var(--red); }
+    .finding.conflict .finding-tag { color: var(--yellow); }
+    .finding h3 { display:flex; justify-content:space-between; gap:10px; margin-bottom: 9px; }
+    .finding h3 span { color: var(--muted); font-size: .8rem; font-weight: 500; }
+    .finding p { color: var(--muted); font-size: .8rem; margin: 0; }
+
+    .topics-panel { grid-column: span 5; }
+    .attribute-panel { grid-column: span 7; }
+    .topic-list { display: grid; gap: 15px; }
+    .topic-row { display: grid; grid-template-columns: 104px 1fr 72px; gap: 10px; align-items: center; font-size: .76rem; }
+    .topic-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .topic-track { height: 7px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.07); }
+    .topic-track span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--blue), var(--blue-light)); box-shadow: 0 0 9px rgba(65,104,232,.38); animation: grow 1s var(--ease) both; }
+    .topic-row small { color: var(--muted); text-align: right; }
+    .attribute-diagnostics { display: grid; gap: 10px; }
+    .attribute-diagnostic { padding: 15px; border: 1px solid var(--line); border-radius: 15px; background: rgba(7,20,31,.22); }
+    .attribute-diagnostic-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+    .attribute-diagnostic-head strong { font-size: .88rem; }
+    .confidence { display: inline-flex; align-items: center; gap: 6px; color: var(--blue-pale); font-size: .62rem; text-transform: uppercase; letter-spacing: .08em; white-space: nowrap; }
+    .confidence::before { content:""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; }
+    .diagnostic-stats { display: flex; flex-wrap: wrap; gap: 7px 13px; margin-top: 9px; color: var(--muted); font-size: .68rem; }
+    .diagnostic-cause { margin: 10px 0 0; color: #cbd5de; font-size: .76rem; }
+
+    .evidence-panel { grid-column: span 7; }
+    .recommend-panel { grid-column: span 5; }
+    .evidence-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 17px; }
+    .evidence-tab { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 7px 11px; font-size: .7rem; cursor:pointer; }
+    .evidence-tab.active { color:#fff; background:rgba(65,104,232,.22); border-color:var(--blue-light); }
+    .quote-list { display: grid; gap: 9px; }
+    .quote { margin: 0; padding: 14px 15px 14px 35px; border-radius: 13px; background: rgba(8,22,33,.32); color: #ccd6df; font-size: .82rem; position: relative; }
+    .quote::before { content: "“"; position: absolute; left: 13px; top: 8px; color: var(--blue-light); font-size: 1.6rem; line-height: 1; }
+    .quote-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+    .quote-meta span { padding: 4px 7px; border-radius: 99px; border: 1px solid rgba(120,160,255,.2); color: var(--blue-pale); background: rgba(65,104,232,.08); font-size: .56rem; text-transform: uppercase; letter-spacing: .075em; }
+    .recommend-list { counter-reset: rec; display: grid; gap: 8px; }
+    .recommendation { counter-increment: rec; display: grid; grid-template-columns: 30px 1fr; gap: 12px; padding: 13px 0; border-top: 1px solid var(--line); }
+    .recommendation:first-child { border-top: 0; }
+    .recommendation::before { content: "0" counter(rec); color: var(--blue-light); font-size: .72rem; letter-spacing: .08em; padding-top: 3px; }
+    .recommendation strong { display:block; margin-bottom:4px; font-size:.85rem; }
+    .recommendation p { color:var(--muted); font-size:.77rem; margin:0; }
+
+    .sentiment-panel { grid-column: span 12; display: grid; grid-template-columns: 1fr 2fr; align-items:center; gap:30px; }
+    .sentiment-panel .panel-title { margin:0; display:block; }
+    .sentiment-panel .panel-title p { margin:8px 0 0; color:var(--muted); font-size:.78rem; }
+    .sentiment-bar { height: 14px; border-radius: 99px; overflow: hidden; display:flex; background:rgba(255,255,255,.06); }
+    .sentiment-bar span { height:100%; transition:width 1s var(--ease); }
+    .sentiment-positive { background:var(--green); }
+    .sentiment-neutral { background:#8395a5; }
+    .sentiment-negative { background:var(--red); }
+    .sentiment-values { display:flex; justify-content:space-between; gap:12px; margin-top:10px; color:var(--muted); font-size:.7rem; }
+    .dashboard-footer { display:flex; justify-content:space-between; align-items:center; gap:18px; padding:30px 0 5px; color:var(--muted); font-size:.72rem; }
+
+    .toast { position:fixed; z-index:100; left:50%; bottom:24px; transform:translate(-50%, 20px); opacity:0; pointer-events:none; padding:12px 17px; border:1px solid var(--line); border-radius:12px; background:rgba(15,29,41,.94); box-shadow:var(--shadow); font-size:.8rem; transition:.3s; }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+
+    @media (max-width: 900px) {
+      .hero { grid-template-columns:1fr; padding-top:30px; }
+      .hero-visual { min-height:430px; }
+      .brand-sculpture { width:330px; }
+      .mini-comparison { right:0; }
+      .method-grid { grid-template-columns:1fr 1fr; }
+      .method-head { display:block; }
+      .method-head p { margin-top:18px; }
+      .score-panel, .summary-panel, .compare-panel, .radar-panel, .topics-panel, .attribute-panel, .evidence-panel, .recommend-panel { grid-column:span 12; }
+      .findings-grid { grid-template-columns:1fr; }
+    }
+    @media (max-width: 660px) {
+      .shell { width:min(100% - 24px, 1180px); }
+      .header-inner { height:65px; }
+      .app-header .brand small, .nav { display:none; }
+      .nav-status { display:block; }
+      .view { padding-top:90px; }
+      h1 { font-size:clamp(2.65rem, 15vw, 4.2rem); }
+      .hero { min-height:auto; }
+      .hero-note { display:grid; gap:7px; }
+      .hero-visual { min-height:365px; }
+      .brand-sculpture { width:270px; }
+      .mini-comparison { bottom:0; padding:15px; }
+      .comparison-row { grid-template-columns:1fr 25px 1fr; }
+      .method-strip { padding:70px 0; }
+      .method-grid { grid-template-columns:1fr; }
+      .method-card { min-height:160px; }
+      .method-card h3 { margin-top:25px; }
+      .progress-item span { display:none; }
+      .step-card { padding:24px 17px; min-height:0; }
+      .form-grid, .goal-grid { grid-template-columns:1fr; }
+      .step-actions { align-items:stretch; flex-direction:column-reverse; }
+      .step-actions-right { display:grid; margin:0; width:100%; }
+      .step-actions > .btn-link { align-self:flex-start; }
+      .feedback-meta { display:block; }
+      .dashboard { padding-top:83px; }
+      .dashboard-top { align-items:flex-start; flex-direction:column; }
+      .dashboard-grid { gap:12px; }
+      .panel { padding:19px 16px; }
+      .score-panel { min-height:345px; }
+      .sentiment-panel { grid-column:span 12; grid-template-columns:1fr; gap:18px; }
+      .dashboard-footer { align-items:flex-start; flex-direction:column; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+    }
+  </style>
+<style>
+@font-face{font-family:Archivo;src:url('/media/archivo.ttf') format('truetype');font-weight:100 900;font-display:swap}
+:root{--bg:#213340;--bg-deep:#11191f;--blue:#3d63e0;--blue-light:#7290ff;--white:#f6f6f4}
+body{font-family:Archivo,Arial,sans-serif}.official-logo{display:block;width:145px;height:auto}.studio-return{font-size:11px;color:var(--muted);white-space:nowrap}.studio-return:hover{color:white}.nav{gap:20px}.header-inner{gap:20px}
+@media(max-width:640px){.official-logo{width:110px}.studio-return{font-size:10px}.header-inner{gap:12px}}
+</style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="shell header-inner">
+      <a class="brand" href="#" id="brandHome" aria-label="Visualize — voltar ao início">
+        <img class="official-logo" src="/media/logo.svg" alt="Visualize">
+      </a>
+      <nav class="nav" aria-label="Navegação principal">
+        <a href="#como-funciona">Como funciona</a>
+        <a href="#" data-start>Diagnóstico</a>
+        <a href="#sobre">Sobre</a>
+      </nav>
+      <a class="studio-return" href="/" target="_top">← Voltar ao estúdio</a><span class="nav-status" id="navStatus">Brand alignment</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="view active" id="homeView">
+      <div class="shell hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Brand alignment · diagnóstico de percepção</p>
+          <h1>Sua marca é percebida como você <em>imagina?</em></h1>
+          <p class="lead">Compare o posicionamento que sua empresa deseja construir com a percepção encontrada na voz dos seus clientes.</p>
+          <div class="hero-actions">
+            <button class="btn btn-primary" type="button" data-start>Analisar minha marca <span class="arrow">→</span></button>
+            <button class="btn btn-ghost" type="button" id="demoHome">Experimentar exemplo</button>
+          </div>
+          <div class="hero-note">
+            <span>Sem cadastro</span><span>Análise no navegador</span><span>Resultado em poucos passos</span>
+          </div>
+        </div>
+        <div class="hero-visual" aria-label="Símbolo Visualize e exemplo de comparação de marca">
+          <div class="orb"></div>
+          <svg class="brand-sculpture" viewBox="0 0 520 500" role="img" aria-label="Símbolo Visualize em vidro azul">
+            <defs>
+              <linearGradient id="glassFill" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a8c3ff" stop-opacity=".44"/><stop offset=".42" stop-color="#4168e8" stop-opacity=".17"/><stop offset="1" stop-color="#153aaf" stop-opacity=".48"/></linearGradient>
+              <linearGradient id="glassStroke"><stop stop-color="#d7e3ff"/><stop offset=".25" stop-color="#5b89ff"/><stop offset=".7" stop-color="#2554df"/><stop offset="1" stop-color="#a7c3ff"/></linearGradient>
+              <filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <path d="M75 72h93l92 288 92-288h93L260 458z" fill="url(#glassFill)" stroke="url(#glassStroke)" stroke-width="7" filter="url(#glow)"/>
+            <path d="M190 72h140a70 70 0 0 1-140 0z" fill="url(#glassFill)" stroke="url(#glassStroke)" stroke-width="7" filter="url(#glow)"/>
+            <path d="M101 92l159 327L419 92" fill="none" stroke="#dce6ff" stroke-opacity=".38" stroke-width="3"/>
+          </svg>
+          <div class="mini-comparison">
+            <div class="comparison-row">
+              <div class="comparison-side"><small>Você deseja transmitir</small><strong>INOVADORA<br>ACOLHEDORA<br>MODERNA</strong></div>
+              <div class="compare-eye">↔</div>
+              <div class="comparison-side"><small>O público percebe</small><strong>ACOLHEDORA<br>CONFIÁVEL<br>TRADICIONAL</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="shell method-strip" id="como-funciona">
+        <div class="method-head">
+          <div><p class="eyebrow">Identidade → percepção → ação</p><h2>Transforme opiniões dispersas em direção de marca.</h2></div>
+          <p class="subtle">Um método visual para revelar alinhamentos, lacunas e tensões entre a marca declarada e a marca percebida.</p>
+        </div>
+        <div class="method-grid">
+          <article class="method-card"><span class="method-num">01</span><h3>Declare a identidade</h3><p>Escolha os atributos que a marca deseja tornar reconhecíveis.</p></article>
+          <article class="method-card"><span class="method-num">02</span><h3>Reúna a voz do público</h3><p>Cole avaliações, respostas de pesquisa ou comentários reais.</p></article>
+          <article class="method-card"><span class="method-num">03</span><h3>Visualize a distância</h3><p>Compare o desejado com os sinais encontrados nos feedbacks.</p></article>
+          <article class="method-card" id="sobre"><span class="method-num">04</span><h3>Oriente a ação</h3><p>Priorize próximos passos de branding a partir de evidências.</p></article>
+        </div>
+      </section>
+    </section>
+
+    <section class="view" id="wizardView">
+      <div class="shell wizard-wrap">
+        <div class="progress" aria-label="Progresso do diagnóstico">
+          <div class="progress-item current" data-progress="1">01 <span>Marca</span></div>
+          <div class="progress-item" data-progress="2">02 <span>Percepção</span></div>
+          <div class="progress-item" data-progress="3">03 <span>Objetivo</span></div>
+          <div class="progress-item" data-progress="4">04 <span>Feedbacks</span></div>
+        </div>
+        <div class="glass step-card">
+          <section class="step active" data-step="1">
+            <div class="step-heading"><p class="eyebrow">01 · Identidade declarada</p><h2>Vamos conhecer sua marca.</h2><p>Essas informações contextualizam o diagnóstico e personalizam a leitura final.</p></div>
+            <div class="form-grid">
+              <div class="field"><label for="brandName">Nome da marca</label><input id="brandName" maxlength="60" placeholder="Ex.: Café Aurora" autocomplete="organization"></div>
+              <div class="field"><label for="brandSegment">Segmento</label><input id="brandSegment" maxlength="60" placeholder="Ex.: Cafeteria e alimentação"></div>
+              <div class="field full"><label for="brandOffer">O que sua empresa oferece?</label><textarea id="brandOffer" maxlength="260" placeholder="Descreva brevemente seus principais produtos, serviços ou experiências."></textarea></div>
+            </div>
+            <p class="validation" id="step1Error" role="alert"></p>
+            <div class="step-actions"><button class="btn btn-link" type="button" data-home>← Voltar</button><div class="step-actions-right"><button class="btn btn-primary" type="button" data-next="2">Continuar <span class="arrow">→</span></button></div></div>
+          </section>
+
+          <section class="step" data-step="2">
+            <div class="step-heading"><p class="eyebrow">02 · Percepção desejada</p><h2>Como sua marca deseja ser percebida?</h2><p>Escolha exatamente três atributos que melhor representam o posicionamento que você quer construir.</p></div>
+            <div id="attributeGroups"></div>
+            <p class="selection-count" id="selectionCount">0 de 3 selecionados</p>
+            <p class="validation" id="step2Error" role="alert"></p>
+            <div class="step-actions"><button class="btn btn-link" type="button" data-prev="1">← Voltar</button><div class="step-actions-right"><button class="btn btn-primary" type="button" data-next="3">Continuar <span class="arrow">→</span></button></div></div>
+          </section>
+
+          <section class="step" data-step="3">
+            <div class="step-heading"><p class="eyebrow">03 · Direção estratégica</p><h2>Qual é sua prioridade agora?</h2><p>A escolha ajuda a orientar as recomendações do diagnóstico.</p></div>
+            <div class="goal-grid" id="goalGrid"></div>
+            <p class="validation" id="step3Error" role="alert"></p>
+            <div class="step-actions"><button class="btn btn-link" type="button" data-prev="2">← Voltar</button><div class="step-actions-right"><button class="btn btn-primary" type="button" data-next="4">Continuar <span class="arrow">→</span></button></div></div>
+          </section>
+
+          <section class="step" data-step="4">
+            <div class="step-heading"><p class="eyebrow">04 · Voz do público</p><h2>O que seus clientes estão dizendo?</h2><p>Cole avaliações ou comentários. Use um feedback por linha para obter uma leitura mais clara.</p></div>
+            <div class="field"><label for="feedbackInput">Feedbacks dos clientes</label><textarea id="feedbackInput" placeholder="O atendimento foi excelente e o ambiente é muito acolhedor.&#10;A marca parece um pouco tradicional.&#10;Gostaria de ver mais novidades..."></textarea></div>
+            <div class="feedback-meta"><span class="micro" id="feedbackCount">0 feedbacks identificados</span><span class="micro sample-badge" id="sampleBadge"></span></div>
+            <p class="validation" id="step4Error" role="alert"></p>
+            <div class="step-actions"><button class="btn btn-link" type="button" data-prev="3">← Voltar</button><div class="step-actions-right"><button class="btn btn-ghost" type="button" id="fillExample">Usar exemplo</button><button class="btn btn-primary" type="button" id="analyzeButton">Analisar feedbacks <span class="arrow">→</span></button></div></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="loadingView" aria-live="polite">
+      <div class="loading-center"><div class="loading-content">
+        <svg class="loader-logo" viewBox="0 0 120 100" aria-hidden="true"><path class="piece left" fill="#4168e8" d="M7 10h27l26 61v27z"/><path class="piece right" fill="#5d82f2" d="M113 10H86L60 71v27z"/><path class="piece eye" fill="#7ba1ff" d="M39 10h42a21 21 0 0 1-42 0z"/></svg>
+        <p class="eyebrow">Visualize diagnostic engine</p><h2>Olhando para sua marca por outra perspectiva.</h2><p id="loadingText">Identificando temas...</p><div class="loading-track"><span></span></div>
+      </div></div>
+    </section>
+
+    <section class="view dashboard" id="dashboardView">
+      <div class="shell">
+        <div class="dashboard-top">
+          <div><p class="eyebrow">Diagnóstico de marca</p><h2 id="resultBrand">Sua marca</h2><p class="subtle" id="resultMeta"></p></div>
+          <button class="btn btn-ghost" type="button" id="newAnalysis">Nova análise</button>
+        </div>
+        <div class="dashboard-grid">
+          <article class="glass panel score-panel">
+            <div class="panel-title"><span class="panel-kicker">Índice proprietário</span><span class="micro">0—100</span></div>
+            <div class="score-ring">
+              <svg viewBox="0 0 186 186" aria-hidden="true"><defs><linearGradient id="scoreGradient"><stop stop-color="#4168e8"/><stop offset="1" stop-color="#a9c2ff"/></linearGradient></defs><circle class="score-track" cx="93" cy="93" r="82"/><circle class="score-value" id="scoreCircle" cx="93" cy="93" r="82"/></svg>
+              <div class="score-number"><span id="scoreNumber">0</span><small>/ 100</small></div>
+            </div>
+            <p class="score-label"><strong id="scoreClass">Alinhamento parcial</strong></p>
+            <p class="micro">Indicador experimental baseado na recorrência, intensidade e oposição dos atributos encontrados.</p>
+          </article>
+
+          <article class="glass panel summary-panel">
+            <div class="panel-title"><span class="panel-kicker">Leitura executiva</span><span class="micro" id="resultDate"></span></div>
+            <p class="summary-text" id="summaryText"></p>
+            <div class="sample-quality"><span class="info-dot">i</span><span id="sampleQuality"></span></div>
+          </article>
+
+          <article class="glass panel compare-panel"><div class="panel-title"><h3>Desejado × percebido</h3><span class="panel-kicker">Distância perceptiva</span></div><div id="comparisonMetrics"></div><div class="legend"><span class="l-desired">Desejado</span><span class="l-perceived">Percebido</span></div></article>
+          <article class="glass panel radar-panel"><div class="panel-title"><h3>Radar de alinhamento</h3><span class="panel-kicker">Mapa visual</span></div><svg id="radarChart" viewBox="0 0 400 340" role="img" aria-label="Gráfico radar comparando percepção desejada e percebida"></svg></article>
+
+          <article class="glass panel findings-panel"><div class="panel-title"><h3>O que encontramos</h3><span class="panel-kicker">Mapa de gaps</span></div><div class="findings-grid" id="findingsGrid"></div></article>
+          <article class="glass panel topics-panel"><div class="panel-title"><h3>Onde a percepção se forma</h3><span class="panel-kicker">Temas recorrentes</span></div><div class="topic-list" id="topicList"></div></article>
+          <article class="glass panel attribute-panel"><div class="panel-title"><h3>Diagnóstico por atributo</h3><span class="panel-kicker">Causas e confiança</span></div><div class="attribute-diagnostics" id="attributeDiagnostics"></div></article>
+          <article class="glass panel evidence-panel"><div class="panel-title"><h3>Evidências dos comentários</h3><span class="panel-kicker">Rastreabilidade</span></div><div class="evidence-tabs" id="evidenceTabs"></div><div class="quote-list" id="quoteList"></div></article>
+          <article class="glass panel recommend-panel"><div class="panel-title"><h3>Próximos passos</h3><span class="panel-kicker">Direção estratégica</span></div><div class="recommend-list" id="recommendList"></div></article>
+          <article class="glass panel sentiment-panel"><div class="panel-title"><h3>Tom geral dos feedbacks</h3><p>Contexto complementar; o foco principal do diagnóstico é percepção de marca.</p></div><div><div class="sentiment-bar" id="sentimentBar"></div><div class="sentiment-values" id="sentimentValues"></div></div></article>
+        </div>
+        <footer class="dashboard-footer"><span>Visualize™ · Brand Alignment MVP</span><span>Resultado experimental — não constitui pesquisa científica validada.</span></footer>
+      </div>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const attributeGroups = {
+        "Personalidade": ["moderna", "tradicional", "jovem", "sofisticada", "próxima", "criativa"],
+        "Posicionamento": ["inovadora", "confiável", "premium", "acessível", "sustentável", "especializada"],
+        "Experiência": ["eficiente", "acolhedora", "prática", "inspiradora"]
+      };
+
+      const lexicon = {
+        moderna: ["moderno", "moderna", "atual", "contemporaneo", "atualizado", "atualizada", "nova cara", "visual novo", "visual renovado", "antenado"],
+        tradicional: ["tradicional", "classico", "classica", "antigo", "antiga", "conservador", "conservadora", "de sempre", "mesma coisa", "parado no tempo"],
+        jovem: ["jovem", "descontraido", "descontraida", "leve", "descolado", "descolada", "vibrante", "dinamico", "dinamica"],
+        sofisticada: ["sofisticado", "sofisticada", "elegante", "refinado", "refinada", "requintado", "requintada", "bem acabado", "bom gosto"],
+        próxima: ["proximo", "proxima", "humano", "humana", "atencioso", "atenciosa", "pessoal", "relacao", "escuta", "se importa"],
+        criativa: ["criativo", "criativa", "original", "inventivo", "inventiva", "autoral", "ideia diferente", "fora do comum", "inesperado"],
+        inovadora: ["inovador", "inovadora", "inovacao", "tecnologia", "novidade", "novidades", "diferente", "surpreendente", "algo novo", "nova opcao", "lancamento"],
+        confiável: ["confiavel", "confianca", "seguro", "segura", "seguranca", "profissional", "cumpre", "consistente", "sempre entrega", "sem erro"],
+        premium: ["premium", "exclusivo", "exclusiva", "luxo", "superior", "alto padrao", "qualidade impecavel", "diferenciado", "diferenciada"],
+        acessível: ["acessivel", "bom preco", "preco justo", "custo beneficio", "barato", "barata", "para todos", "vale o preco", "em conta"],
+        sustentável: ["sustentavel", "sustentabilidade", "ecologico", "ecologica", "reciclavel", "meio ambiente", "consciente", "menos plastico", "reutilizavel"],
+        especializada: ["especialista", "especializada", "especializado", "conhecimento", "tecnico", "tecnica", "entende muito", "expert", "dominio", "sabe explicar"],
+        eficiente: ["eficiente", "rapido", "rapida", "agil", "agilidade", "pontual", "resolveu", "pronto", "sem demora", "imediato"],
+        acolhedora: ["acolhedor", "acolhedora", "aconchegante", "confortavel", "carinhoso", "carinhosa", "bem recebido", "bem recebida", "atendimento excelente", "me senti em casa", "receptivo"],
+        prática: ["pratico", "pratica", "facil", "simples", "conveniente", "intuitivo", "intuitiva", "sem complicacao", "facilidade", "descomplicado"],
+        inspiradora: ["inspirador", "inspiradora", "inspira", "motivador", "motivadora", "encantador", "encantadora", "memoravel", "emocionante", "marcante"]
+      };
+
+      const absenceSignals = {
+        moderna: ["poderia ser mais moderno", "poderia ser mais moderna", "visual ultrapassado", "parece antigo", "parece antiga", "falta modernidade", "precisa atualizar"],
+        tradicional: ["perdeu a tradicao", "sem identidade classica"],
+        jovem: ["parece envelhecida", "publico mais velho", "pouco dinamica"],
+        sofisticada: ["acabamento simples", "parece amador", "sem refinamento"],
+        próxima: ["atendimento distante", "resposta automatica", "parece impessoal", "nao escuta"],
+        criativa: ["mais do mesmo", "sem criatividade", "pouco original", "ideias repetidas"],
+        inovadora: ["falta inovacao", "faltam novidades", "mais do mesmo", "sempre igual", "mesmo de sempre", "pouca novidade", "poucas novidades", "poderia inovar", "gostaria de novidade", "gostaria de ver mais", "nao muda"],
+        confiável: ["nao cumpre", "nao passa confianca", "inconsistente", "promete e nao entrega"],
+        premium: ["parece barato", "baixa qualidade", "sem exclusividade", "nao vale o preco"],
+        acessível: ["muito caro", "preco alto", "fora do orcamento", "pouco acessivel"],
+        sustentável: ["muito plastico", "desperdicio", "sem pratica sustentavel", "nao recicla"],
+        especializada: ["nao souberam explicar", "pouco conhecimento", "atendimento despreparado"],
+        eficiente: ["demorou", "demorado", "atraso", "fila", "nao resolveu", "lento", "lenta"],
+        acolhedora: ["ambiente frio", "atendimento frio", "mal recebido", "mal recebida", "pouco acolhedor"],
+        prática: ["complicado", "complicada", "confuso", "confusa", "muitas etapas", "dificil de usar"],
+        inspiradora: ["esquecivel", "sem personalidade", "nao marcou", "experiencia comum"]
+      };
+
+      const indirectSignals = {
+        moderna: ["nova identidade", "interface limpa", "design atual", "experiencia digital"],
+        inovadora: ["nunca tinha visto", "me surpreendeu", "nova experiencia", "solucao diferente"],
+        confiável: ["sempre mantem", "cumpre o que promete", "nunca tive problema", "posso contar"],
+        próxima: ["chamou pelo nome", "ouviu minha opiniao", "respondeu com cuidado"],
+        eficiente: ["resolveu na hora", "nao precisei esperar", "foi bem rapido"],
+        acolhedora: ["me senti em casa", "bom para conversar", "quero ficar mais tempo"],
+        sustentável: ["embalagem retornavel", "produto local", "reduz residuos"],
+        especializada: ["explicou com clareza", "tirou todas as duvidas", "recomendacao precisa"]
+      };
+
+      const themes = {
+        atendimento: ["atendimento", "atendente", "equipe", "funcionario", "funcionaria", "recebe", "respondeu", "suporte"],
+        produto: ["produto", "servico", "cafe", "bebida", "comida", "cardapio", "opcao", "sabor", "solucao"],
+        ambiente: ["ambiente", "espaco", "lugar", "loja", "decoracao", "conforto", "clima"],
+        identidade_visual: ["visual", "logo", "identidade", "design", "cores", "aparencia", "embalagem"],
+        comunicação: ["comunicacao", "mensagem", "campanha", "site", "rede social", "instagram", "texto", "divulgacao"],
+        preço_valor: ["preco", "valor", "caro", "barato", "custo", "beneficio", "qualidade"],
+        experiência_digital: ["aplicativo", "app", "site", "online", "digital", "sistema", "interface"],
+        agilidade: ["rapido", "rapida", "demora", "demorado", "fila", "prazo", "atraso", "agil"],
+        variedade: ["variedade", "opcoes", "opcao", "cardapio", "novidade", "novidades", "lancamento"],
+        qualidade: ["qualidade", "acabamento", "duravel", "consistente", "sabor", "feito"],
+        sustentabilidade: ["sustentavel", "reciclavel", "plastico", "residuo", "meio ambiente", "local"],
+        relacionamento: ["proximo", "proxima", "humano", "humana", "escuta", "relacao", "carinho", "atencioso"]
+      };
+      const themeLabels = {
+        atendimento: "Atendimento", produto: "Produto/serviço", ambiente: "Ambiente", identidade_visual: "Identidade visual",
+        comunicação: "Comunicação", preço_valor: "Preço e valor", experiência_digital: "Experiência digital", agilidade: "Agilidade",
+        variedade: "Variedade", qualidade: "Qualidade", sustentabilidade: "Sustentabilidade", relacionamento: "Relacionamento"
+      };
+
+      const opposites = {
+        moderna: "tradicional", tradicional: "moderna", jovem: "tradicional", sofisticada: "acessível",
+        próxima: "distante", inovadora: "tradicional", premium: "acessível", acessível: "premium",
+        eficiente: "lenta", acolhedora: "fria", prática: "complicada"
+      };
+      const oppositeWords = {
+        distante: ["distante", "frio", "fria", "impessoal"], lenta: ["lento", "lenta", "demorado", "demorada", "atraso"],
+        fria: ["frio", "fria", "hostil", "mal atendido", "mal atendida"], complicada: ["complicado", "complicada", "confuso", "confusa", "dificil"]
+      };
+      const labels = Object.fromEntries(Object.keys(lexicon).map(k => [k, k.charAt(0).toUpperCase() + k.slice(1)]));
+      const positiveWords = ["otimo","otima","excelente","bom","boa","adorei","amei","recomendo","qualidade","perfeito","perfeita","maravilhoso","maravilhosa","gostei","agradavel","surpreendeu","impecavel","resolveu"];
+      const negativeWords = ["ruim","pessimo","pessima","demorado","demorada","atrasado","atrasada","caro","cara","problema","decepcao","confuso","confusa","dificil","frio","fria","ultrapassado","falhou","falta"];
+      const negators = ["nao", "nunca", "nem", "pouco", "pouca", "sem", "falta", "faltam", "gostaria", "precisa", "deveria", "poderia", "raramente", "menos"];
+      const expectationWords = ["gostaria", "poderia", "deveria", "precisa", "falta", "faltam", "queria", "esperava", "seria bom"];
+      const intensifiers = { high: ["extremamente", "muito", "totalmente", "super", "demais", "bastante", "realmente"], low: ["um pouco", "as vezes", "raramente", "quase nao", "mais ou menos", "levemente"] };
+      const goals = {
+        posicionamento: ["Posicionamento", "Fortalecer a forma como a marca ocupa espaço no mercado."],
+        comunicação: ["Comunicação", "Tornar a mensagem mais coerente com a identidade."],
+        reputação: ["Reputação", "Melhorar a imagem percebida pelo público."],
+        experiência: ["Experiência", "Identificar pontos de atrito com consumidores."],
+        valor: ["Valor percebido", "Aumentar percepção de qualidade e diferenciação."]
+      };
+
+      const demo = {
+        name: "Café Aurora", segment: "Cafeteria e alimentação",
+        offer: "Cafés especiais, confeitaria artesanal e experiências de consumo em um ambiente de bairro.",
+        attributes: ["moderna", "acolhedora", "inovadora"], goal: "posicionamento",
+        feedbacks: [
+          "O ambiente é muito aconchegante e a equipe sempre recebe a gente com carinho.",
+          "Atendimento excelente, café de ótima qualidade e um lugar confortável para conversar.",
+          "Parece uma cafeteria bem tradicional, com o mesmo cardápio de sempre.",
+          "Gosto muito do clima acolhedor, mas o visual poderia ser mais moderno.",
+          "Os produtos são bons e a equipe é muito atenciosa.",
+          "Gostaria de ver mais novidades e opções diferentes no cardápio.",
+          "É um lugar confiável, sempre mantém a qualidade e cumpre o que promete.",
+          "A experiência é agradável, embora a marca ainda pareça um pouco antiga.",
+          "O atendimento é rápido, próximo e muito humano.",
+          "Tem cara de negócio clássico do bairro; falta inovação na comunicação.",
+          "Adorei a nova bebida sazonal, foi uma novidade criativa.",
+          "Lugar confortável e acolhedor, recomendo para encontrar amigos."
+        ]
+      };
+
+      const state = { step: 1, selected: [], goal: "", result: null };
+      const $ = sel => document.querySelector(sel);
+      const $$ = sel => [...document.querySelectorAll(sel)];
+      const normalize = value => value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[”“\"']/g, "").trim();
+      const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+      const escapeHTML = value => String(value).replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+      const splitFeedbacks = value => value.split(/\n+/).map(s => s.trim()).filter(Boolean);
+      const pretty = key => labels[key] || key.charAt(0).toUpperCase() + key.slice(1);
+
+      function renderInputs() {
+        $("#attributeGroups").innerHTML = Object.entries(attributeGroups).map(([group, attrs]) => `<div class="attribute-group"><p class="group-title">${group}</p><div class="chips">${attrs.map(attr => `<button class="chip" type="button" data-attr="${attr}" aria-pressed="false">${pretty(attr)}</button>`).join("")}</div></div>`).join("");
+        $("#goalGrid").innerHTML = Object.entries(goals).map(([key, val]) => `<button class="goal-card" type="button" data-goal="${key}" aria-pressed="false"><strong>${val[0]}</strong><span>${val[1]}</span></button>`).join("");
+      }
+
+      function showView(id) {
+        $$(".view").forEach(v => v.classList.toggle("active", v.id === id));
+        $("#navStatus").textContent = id === "wizardView" ? `Etapa ${state.step} de 4` : id === "dashboardView" ? "Diagnóstico" : "Brand alignment";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      function startWizard(step = 1) { state.step = step; showStep(step); showView("wizardView"); }
+      function showStep(step) {
+        state.step = step;
+        $$(".step").forEach(s => s.classList.toggle("active", Number(s.dataset.step) === step));
+        $$(".progress-item").forEach(p => { const n = Number(p.dataset.progress); p.classList.toggle("done", n < step); p.classList.toggle("current", n === step); });
+        $("#navStatus").textContent = `Etapa ${step} de 4`;
+      }
+      function clearErrors() { $$(".validation").forEach(el => el.textContent = ""); }
+      function validateStep(step) {
+        clearErrors();
+        if (step === 1 && !$("#brandName").value.trim()) { $("#step1Error").textContent = "Informe o nome da marca para continuar."; return false; }
+        if (step === 2 && state.selected.length !== 3) { $("#step2Error").textContent = "Escolha exatamente três atributos."; return false; }
+        if (step === 3 && !state.goal) { $("#step3Error").textContent = "Selecione uma prioridade para continuar."; return false; }
+        return true;
+      }
+
+      function toggleAttribute(button) {
+        const attr = button.dataset.attr;
+        if (state.selected.includes(attr)) state.selected = state.selected.filter(a => a !== attr);
+        else if (state.selected.length < 3) state.selected.push(attr);
+        else { showToast("Você pode selecionar até três atributos."); return; }
+        $$("[data-attr]").forEach(btn => { const selected = state.selected.includes(btn.dataset.attr); btn.classList.toggle("selected", selected); btn.setAttribute("aria-pressed", selected); });
+        $("#selectionCount").textContent = `${state.selected.length} de 3 selecionados`;
+        $("#step2Error").textContent = "";
+      }
+
+      function chooseGoal(button) {
+        state.goal = button.dataset.goal;
+        $$("[data-goal]").forEach(btn => { const selected = btn.dataset.goal === state.goal; btn.classList.toggle("selected", selected); btn.setAttribute("aria-pressed", selected); });
+        $("#step3Error").textContent = "";
+      }
+
+      function populateDemo(openFeedback = true) {
+        $("#brandName").value = demo.name; $("#brandSegment").value = demo.segment; $("#brandOffer").value = demo.offer;
+        state.selected = [...demo.attributes]; state.goal = demo.goal;
+        $$("[data-attr]").forEach(btn => { const on = state.selected.includes(btn.dataset.attr); btn.classList.toggle("selected", on); btn.setAttribute("aria-pressed", on); });
+        $$("[data-goal]").forEach(btn => { const on = btn.dataset.goal === state.goal; btn.classList.toggle("selected", on); btn.setAttribute("aria-pressed", on); });
+        $("#selectionCount").textContent = "3 de 3 selecionados";
+        $("#feedbackInput").value = demo.feedbacks.join("\n"); updateFeedbackCount();
+        $("#sampleBadge").textContent = "Modo demonstração";
+        if (openFeedback) startWizard(4);
+        showToast("Exemplo Café Aurora carregado.");
+      }
+
+      function updateFeedbackCount() {
+        const count = splitFeedbacks($("#feedbackInput").value).length;
+        $("#feedbackCount").textContent = `${count} feedback${count === 1 ? "" : "s"} identificado${count === 1 ? "" : "s"}`;
+      }
+
+      function wordHits(text, words) { return words.reduce((sum, word) => sum + (text.includes(word) ? 1 : 0), 0); }
+      function isNegated(text, keyword) {
+        const idx = text.indexOf(keyword); if (idx < 0) return false;
+        const context = text.slice(Math.max(0, idx - 38), idx + keyword.length + 12);
+        return negators.some(n => context.includes(n));
+      }
+
+      function splitClauses(comment, commentIndex) {
+        return comment
+          .split(/(?<=[.!?;])\s+|\s+(?:mas|porém|porem|contudo|entretanto|embora|apesar disso|só que|so que)\s+/i)
+          .map(part => part.trim().replace(/^[,;:\-–—]+|[,;:\-–—]+$/g, ""))
+          .filter(Boolean)
+          .map(original => ({ commentIndex, original, text: normalize(original) }));
+      }
+
+      function detectTopics(text) {
+        return Object.entries(themes)
+          .map(([theme, words]) => ({ theme, hits: wordHits(text, words) }))
+          .filter(item => item.hits > 0)
+          .sort((a,b) => b.hits-a.hits)
+          .map(item => item.theme);
+      }
+
+      function intensityOf(text) {
+        if (intensifiers.high.some(word => text.includes(word))) return 1.35;
+        if (intensifiers.low.some(word => text.includes(word))) return .65;
+        return 1;
+      }
+
+      function confidenceFor(count) {
+        if (count >= 4) return { key: "alta", label: "Confiança alta" };
+        if (count >= 2) return { key: "moderada", label: "Confiança moderada" };
+        if (count === 1) return { key: "inicial", label: "Sinal inicial" };
+        return { key: "insuficiente", label: "Sem evidência suficiente" };
+      }
+
+      function primaryThemeFor(attr, evidences) {
+        const counts = {};
+        evidences.forEach(e => e.topics.forEach(topic => { counts[topic] = (counts[topic] || 0) + 1; }));
+        const ranked = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+        if (ranked.length) return ranked.map(([theme,count]) => ({ theme, count }));
+        const fallback = { acolhedora:"atendimento", próxima:"relacionamento", eficiente:"agilidade", prática:"experiência_digital", inovadora:"variedade", moderna:"identidade_visual", premium:"preço_valor", acessível:"preço_valor", sustentável:"sustentabilidade", confiável:"qualidade" };
+        return [{ theme: fallback[attr] || "comunicação", count: 0 }];
+      }
+
+      function analyze() {
+        const comments = splitFeedbacks($("#feedbackInput").value);
+        if (comments.length < 2) { $("#step4Error").textContent = "Inclua pelo menos dois feedbacks, um por linha."; return; }
+        if (!validateStep(1) || state.selected.length !== 3 || !state.goal) { $("#step4Error").textContent = "Revise as etapas anteriores antes de analisar."; return; }
+
+        const normalized = comments.map(c => normalize(c));
+        const clauses = comments.flatMap((comment, index) => splitClauses(comment, index));
+        const topicData = {};
+        Object.keys(themes).forEach(theme => { topicData[theme] = { count: 0, positive: 0, negative: 0, commentIds: new Set() }; });
+        normalized.forEach((text, commentIndex) => {
+          const p = wordHits(text, positiveWords), n = wordHits(text, negativeWords);
+          detectTopics(text).forEach(theme => {
+            const item = topicData[theme];
+            if (!item.commentIds.has(commentIndex)) {
+              item.commentIds.add(commentIndex); item.count += 1;
+              if (p > n) item.positive += 1; else if (n > p) item.negative += 1;
+            }
+          });
+        });
+
+        const attrData = {};
+        Object.keys(lexicon).forEach(attr => {
+          const evidence = [];
+          clauses.forEach(clause => {
+            const text = clause.text;
+            const directMatches = lexicon[attr].filter(word => text.includes(word));
+            const indirectMatches = (indirectSignals[attr] || []).filter(word => text.includes(word));
+            const explicitAbsence = (absenceSignals[attr] || []).some(phrase => text.includes(phrase));
+            const expected = expectationWords.some(word => text.includes(word));
+            const negated = directMatches.some(word => isNegated(text, word));
+            const oppositeKey = opposites[attr];
+            const oWords = oppositeKey ? (lexicon[oppositeKey] || oppositeWords[oppositeKey] || []) : [];
+            const hasOpposite = oWords.some(word => text.includes(word));
+            let type = "";
+            if (explicitAbsence || ((directMatches.length || indirectMatches.length) && (expected || negated))) type = expected ? "expectativa" : "ausência";
+            else if (hasOpposite) type = "oposição";
+            else if (directMatches.length || indirectMatches.length) type = indirectMatches.length && !directMatches.length ? "presença indireta" : "presença positiva";
+            if (type) evidence.push({
+              excerpt: clause.original,
+              comment: comments[clause.commentIndex],
+              commentIndex: clause.commentIndex,
+              type,
+              intensity: intensityOf(text),
+              topics: detectTopics(text),
+              matched: [...directMatches, ...indirectMatches].slice(0,2)
+            });
+          });
+
+          const idsFor = types => new Set(evidence.filter(e => types.includes(e.type)).map(e => e.commentIndex));
+          const positiveIds = idsFor(["presença positiva", "presença indireta"]);
+          const negativeIds = idsFor(["ausência", "expectativa"]);
+          const oppositeIds = idsFor(["oposição"]);
+          const allIds = new Set(evidence.map(e => e.commentIndex));
+          const positiveStrength = evidence.filter(e => e.type.startsWith("presença")).reduce((sum,e) => sum+e.intensity, 0);
+          const posCoverage = positiveIds.size / comments.length;
+          const negCoverage = negativeIds.size / comments.length;
+          const oppositeCoverage = oppositeIds.size / comments.length;
+          const raw = 35 + posCoverage*75 + Math.min(positiveStrength*4, 15) - negCoverage*38 - oppositeCoverage*35;
+          const topTopics = primaryThemeFor(attr, evidence);
+          attrData[attr] = {
+            score: clamp(Math.round(raw), 0, 100),
+            positive: positiveIds.size,
+            negative: negativeIds.size,
+            opposite: oppositeIds.size,
+            recurrence: allIds.size,
+            confidence: confidenceFor(allIds.size),
+            topTopics,
+            evidence: evidence.sort((a,b) => {
+              const priority = { "expectativa":0, "ausência":1, "oposição":2, "presença positiva":3, "presença indireta":4 };
+              return priority[a.type]-priority[b.type] || b.intensity-a.intensity;
+            })
+          };
+        });
+
+        const desiredData = state.selected.map(attr => ({ attr, ...attrData[attr] }));
+        const alignment = Math.round(desiredData.reduce((sum, a) => sum + a.score, 0) / desiredData.length);
+        const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
+        normalized.forEach(text => { const p = wordHits(text, positiveWords), n = wordHits(text, negativeWords); if (p > n) sentimentCounts.positive++; else if (n > p) sentimentCounts.negative++; else sentimentCounts.neutral++; });
+        const total = comments.length;
+        const sentiment = Object.fromEntries(Object.entries(sentimentCounts).map(([k,v]) => [k, Math.round(v / total * 100)]));
+        sentiment.neutral += 100 - sentiment.positive - sentiment.negative;
+
+        const force = [...desiredData].sort((a,b) => b.score-a.score)[0];
+        const gap = [...desiredData].sort((a,b) => a.score-b.score)[0];
+        const conflictCandidates = desiredData.filter(a => a.opposite > 0).sort((a,b) => b.opposite-a.opposite);
+        let conflict = conflictCandidates[0];
+        let conflictLabel = conflict && opposites[conflict.attr] ? pretty(opposites[conflict.attr]) : "Sinal contrário";
+        const emergingCandidates = Object.entries(attrData).filter(([a,d]) => !state.selected.includes(a) && d.recurrence > 0).sort((a,b) => b[1].score-a[1].score);
+        const emergingEntry = emergingCandidates[0] || Object.entries(attrData).find(([a]) => !state.selected.includes(a));
+        if (!conflict) {
+          conflict = { attr: emergingEntry[0], ...emergingEntry[1] }; conflictLabel = pretty(emergingEntry[0]);
+        }
+        const overallEvidence = new Set(desiredData.flatMap(d => d.evidence.map(e => e.commentIndex))).size;
+        const overallConfidence = confidenceFor(overallEvidence);
+        const rankedTopics = Object.entries(topicData).filter(([,d]) => d.count > 0).sort((a,b) => b[1].count-a[1].count).map(([theme,data]) => ({ theme, count:data.count, positive:data.positive, negative:data.negative }));
+
+        state.result = { brand: $("#brandName").value.trim(), segment: $("#brandSegment").value.trim(), offer: $("#brandOffer").value.trim(), goal: state.goal, comments, clauses, attrData, desiredData, alignment, sentiment, force, gap, conflict, conflictLabel, emerging: { attr: emergingEntry[0], ...emergingEntry[1] }, rankedTopics, overallConfidence, overallEvidence };
+        runLoading();
+      }
+
+      function runLoading() {
+        showView("loadingView");
+        const phases = ["Identificando temas...", "Interpretando percepção...", "Comparando posicionamento...", "Construindo diagnóstico..."];
+        phases.forEach((text, i) => setTimeout(() => { $("#loadingText").textContent = text; }, i * 430));
+        setTimeout(() => { renderDashboard(state.result); showView("dashboardView"); animateScore(state.result.alignment); }, 1850);
+      }
+
+      function scoreClass(score) {
+        if (score >= 80) return "Alto alinhamento";
+        if (score >= 60) return "Alinhamento consistente";
+        if (score >= 40) return "Alinhamento parcial";
+        return "Desalinhamento";
+      }
+      function sampleQuality(n) {
+        if (n < 5) return "Amostra reduzida. O resultado serve apenas como demonstração inicial e não deve orientar decisões isoladamente.";
+        if (n < 15) return "Diagnóstico preliminar. Amplie a amostra para aumentar a representatividade dos sinais encontrados.";
+        return "Base adequada para demonstração do protótipo. Ainda assim, o indicador não substitui pesquisa estruturada de marca.";
+      }
+      function summaryText(r) {
+        const force = pretty(r.force.attr).toLowerCase(), gap = pretty(r.gap.attr).toLowerCase();
+        const forceTheme = themeLabels[r.force.topTopics[0]?.theme]?.toLowerCase() || "experiência";
+        const gapTheme = themeLabels[r.gap.topTopics[0]?.theme]?.toLowerCase() || "comunicação";
+        const support = r.force.positive === 1 ? "um feedback" : `${r.force.positive} feedbacks`;
+        const friction = r.gap.negative + r.gap.opposite;
+        if (r.alignment >= 80) return `A percepção de ${force} está consolidada em ${support}, principalmente por sinais de ${forceTheme}. O alinhamento é alto; a prioridade é preservar essa força enquanto ${gap} ganha evidências mais consistentes.`;
+        if (r.alignment >= 60) return `A marca comunica ${force} com consistência, sustentada sobretudo por ${forceTheme}. Ainda há distância em ${gap}: ${friction || "poucas"} evidências críticas se concentram em ${gapTheme}.`;
+        return `A marca é reconhecida por ${force}, percepção construída principalmente em ${forceTheme}. Entretanto, ${gap} ainda não chega ao público com clareza: ${friction || "há poucas"} evidências de ausência ou oposição se concentram em ${gapTheme}.`;
+      }
+
+      function renderDashboard(r) {
+        $("#resultBrand").textContent = r.brand;
+        $("#resultMeta").textContent = [r.segment, goals[r.goal]?.[0], `${r.comments.length} feedbacks`].filter(Boolean).join(" · ");
+        $("#resultDate").textContent = new Intl.DateTimeFormat("pt-BR", { day:"2-digit", month:"short", year:"numeric" }).format(new Date()).replace(" de ", " ").replace(" de ", " ");
+        $("#scoreClass").textContent = scoreClass(r.alignment);
+        $("#summaryText").textContent = summaryText(r);
+        $("#sampleQuality").textContent = `${r.overallConfidence.label} · ${sampleQuality(r.comments.length)}`;
+
+        $("#comparisonMetrics").innerHTML = r.desiredData.map(item => `<div class="metric-row"><div class="metric-head"><strong>${pretty(item.attr)}</strong><span>100 desejado · ${item.score} percebido</span></div><div class="dual-track"><span class="desired-bar" style="width:100%"></span><span class="perceived-bar" style="width:${item.score}%"></span></div></div>`).join("");
+        renderRadar(r.desiredData);
+
+        const forceTheme = themeLabels[r.force.topTopics[0]?.theme]?.toLowerCase() || "experiência";
+        const gapTheme = themeLabels[r.gap.topTopics[0]?.theme]?.toLowerCase() || "comunicação";
+        const conflictDesc = r.conflict.opposite > 0 ? `Foram encontrados ${r.conflict.opposite} feedback${r.conflict.opposite===1?"":"s"} com sinais de ${r.conflictLabel.toLowerCase()}, tensionando ${pretty(r.conflict.attr).toLowerCase()}.` : `${r.conflictLabel} aparece espontaneamente e pode representar uma percepção emergente a ser investigada.`;
+        $("#findingsGrid").innerHTML = `
+          <div class="finding force"><span class="finding-tag">Força alinhada</span><h3>${pretty(r.force.attr)} <span>${r.force.score}/100</span></h3><p>${r.force.positive} feedback${r.force.positive===1?"":"s"} sustenta${r.force.positive===1?"":"m"} essa percepção, principalmente em ${forceTheme}.</p></div>
+          <div class="finding gap"><span class="finding-tag">Gap de posicionamento</span><h3>${pretty(r.gap.attr)} <span>${r.gap.score}/100</span></h3><p>${r.gap.negative+r.gap.opposite} ${r.gap.negative+r.gap.opposite===1?"sinal":"sinais"} de ausência ou oposição, ${r.gap.negative+r.gap.opposite===1?"concentrado":"concentrados"} em ${gapTheme}.</p></div>
+          <div class="finding conflict"><span class="finding-tag">${r.conflict.opposite > 0 ? "Conflito" : "Percepção emergente"}</span><h3>${r.conflictLabel} <span>${r.conflict.opposite > 0 ? r.conflict.opposite + " sinais" : r.conflict.score + "/100"}</span></h3><p>${conflictDesc}</p></div>`;
+
+        renderTopics(r);
+        renderAttributeDiagnostics(r);
+
+        const evidenceAttrs = [...new Set([r.gap.attr, r.force.attr, ...state.selected])];
+        $("#evidenceTabs").innerHTML = evidenceAttrs.map((a,i) => `<button class="evidence-tab ${i===0?"active":""}" type="button" data-evidence="${a}">${pretty(a)} · ${r.attrData[a].score}</button>`).join("");
+        renderEvidence(evidenceAttrs[0]);
+        $("#evidenceTabs").querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => { $("#evidenceTabs").querySelectorAll("button").forEach(b => b.classList.remove("active")); btn.classList.add("active"); renderEvidence(btn.dataset.evidence); }));
+
+        const recommendations = buildRecommendations(r);
+        $("#recommendList").innerHTML = recommendations.map(rec => `<div class="recommendation"><div><strong>${rec[0]}</strong><p>${rec[1]}</p></div></div>`).join("");
+        renderSentiment(r.sentiment);
+      }
+
+      function renderEvidence(attr) {
+        const data = state.result.attrData[attr];
+        if (!data.evidence.length) {
+          $("#quoteList").innerHTML = `<blockquote class="quote">Nenhuma menção direta ou indireta a ${pretty(attr).toLowerCase()} foi encontrada. A nota permanece inconclusiva e deve ser lida com cautela.<div class="quote-meta"><span>Sem evidência suficiente</span></div></blockquote>`;
+          return;
+        }
+        $("#quoteList").innerHTML = data.evidence.slice(0,4).map(item => {
+          const topic = item.topics[0] ? themeLabels[item.topics[0]] : "Contexto geral";
+          const intensity = item.intensity > 1 ? "Alta intensidade" : item.intensity < 1 ? "Baixa intensidade" : "Intensidade regular";
+          return `<blockquote class="quote">${escapeHTML(item.excerpt)}<div class="quote-meta"><span>${escapeHTML(topic)}</span><span>${escapeHTML(item.type)}</span><span>${intensity}</span></div></blockquote>`;
+        }).join("");
+      }
+
+      function renderTopics(r) {
+        const ranked = r.rankedTopics.slice(0,6);
+        if (!ranked.length) { $("#topicList").innerHTML = '<p class="subtle">Não houve vocabulário temático suficiente para localizar a origem das percepções.</p>'; return; }
+        const max = Math.max(...ranked.map(item => item.count), 1);
+        $("#topicList").innerHTML = ranked.map(item => `<div class="topic-row"><strong>${themeLabels[item.theme]}</strong><div class="topic-track"><span style="width:${Math.round(item.count/max*100)}%"></span></div><small>${item.count} de ${r.comments.length}</small></div>`).join("");
+      }
+
+      function renderAttributeDiagnostics(r) {
+        $("#attributeDiagnostics").innerHTML = r.desiredData.map(item => {
+          const topic = themeLabels[item.topTopics[0]?.theme] || "Contexto geral";
+          const critical = item.negative + item.opposite;
+          const cause = critical
+            ? `A principal tensão aparece em ${topic.toLowerCase()}, com ${critical} feedback${critical===1?"":"s"} indicando ausência, expectativa não atendida ou percepção contrária.`
+            : item.positive
+              ? `A percepção é sustentada principalmente por ${topic.toLowerCase()}, sem oposição relevante nos comentários analisados.`
+              : `Não há evidências suficientes para confirmar se este atributo está chegando ao público.`;
+          return `<div class="attribute-diagnostic"><div class="attribute-diagnostic-head"><strong>${pretty(item.attr)} · ${item.score}/100</strong><span class="confidence">${item.confidence.label}</span></div><div class="diagnostic-stats"><span>${item.positive} presenças</span><span>${item.negative} ausências/expectativas</span><span>${item.opposite} oposições</span><span>${item.recurrence} comentários relacionados</span></div><p class="diagnostic-cause">${cause}</p></div>`;
+        }).join("");
+      }
+
+      function buildRecommendations(r) {
+        const gap = pretty(r.gap.attr), force = pretty(r.force.attr);
+        const gapThemeKey = r.gap.topTopics[0]?.theme || "comunicação";
+        const gapTheme = themeLabels[gapThemeKey] || "Comunicação";
+        const actionByAttr = {
+          moderna: "Atualize sinais visuais, linguagem e pontos de contato que hoje reforçam uma leitura tradicional.",
+          inovadora: "Torne lançamentos, processos e novidades mais visíveis na comunicação e na experiência.",
+          acolhedora: "Revise atendimento, ambiente e linguagem para produzir sinais mais claros de cuidado e proximidade.",
+          confiável: "Dê evidência a processos, provas, consistência de entrega e compromissos cumpridos.",
+          sofisticada: "Alinhe acabamento visual, detalhes de serviço e curadoria à percepção de refinamento.",
+          premium: "Construa justificativas tangíveis para valor, exclusividade e qualidade superior.",
+          acessível: "Simplifique mensagens, condições e jornadas para reduzir barreiras de entrada.",
+          sustentável: "Transforme práticas responsáveis em provas visíveis, específicas e verificáveis.",
+          eficiente: "Mapeie os pontos de atrito e comunique benefícios ligados a tempo, facilidade e resolução.",
+          prática: "Reduza etapas e deixe a facilidade de uso evidente em toda a jornada.",
+          criativa: "Mostre ideias autorais e soluções inesperadas com maior frequência e consistência.",
+          próxima: "Humanize a voz da marca e crie oportunidades reais de escuta e relacionamento."
+        };
+        const goalAction = {
+          posicionamento: "Concentre a próxima campanha em uma promessa central e repita seus sinais de forma coerente.",
+          comunicação: "Crie um guia de mensagens que traduza os atributos desejados em palavras, imagens e provas.",
+          reputação: "Responda aos padrões dos feedbacks e transforme melhorias realizadas em evidências públicas.",
+          experiência: "Revise a jornada nos pontos onde a intenção da marca não chega com clareza ao cliente.",
+          valor: "Conecte diferenciais concretos a benefícios percebidos, evitando promessas genéricas de qualidade."
+        };
+        const actionByTheme = {
+          atendimento: "Treine comportamentos observáveis no atendimento e acompanhe se eles aparecem espontaneamente nos próximos feedbacks.",
+          produto: "Converta o atributo desejado em mudanças concretas no produto ou serviço e comunique o motivo dessas escolhas.",
+          ambiente: "Revise os sinais físicos do ambiente — materiais, organização, conforto e linguagem — que moldam essa percepção.",
+          identidade_visual: "Ajuste elementos visuais e pontos de contato para que o atributo seja reconhecido antes mesmo da explicação verbal.",
+          comunicação: "Crie uma mensagem central com provas concretas e repita-a de forma consistente nos canais prioritários.",
+          preço_valor: "Conecte preço, benefícios e provas de qualidade para tornar a proposta de valor mais compreensível.",
+          experiência_digital: "Simplifique a jornada digital e use interface, conteúdo e microinterações como sinais do posicionamento desejado.",
+          agilidade: "Mapeie esperas, prazos e retrabalho; comunique também as melhorias realizadas e o padrão esperado de entrega.",
+          variedade: "Crie um ritmo perceptível de novidades e ajude o público a reconhecer o que mudou e por que isso importa.",
+          qualidade: "Transforme padrões de qualidade em provas visíveis, específicas e consistentes ao longo da experiência.",
+          sustentabilidade: "Mostre práticas verificáveis, metas e resultados, evitando mensagens ambientais genéricas.",
+          relacionamento: "Crie rituais de escuta, resposta e acompanhamento que tornem a proximidade concretamente perceptível."
+        };
+        return [
+          [`Atue em ${gapTheme.toLowerCase()}`, `${actionByTheme[gapThemeKey]} ${actionByAttr[r.gap.attr] || ""}`.trim()],
+          [`Torne ${gap.toLowerCase()} reconhecível`, `${goalAction[r.goal]} Use como ponto de partida as ${r.gap.negative+r.gap.opposite} evidências críticas encontradas.`],
+          [`Preserve ${force.toLowerCase()}`, "Este atributo já aparece com maior consistência. Use-o como base para evoluir sem perder reconhecimento."]
+        ];
+      }
+
+      function renderSentiment(s) {
+        $("#sentimentBar").innerHTML = `<span class="sentiment-positive" style="width:${s.positive}%"></span><span class="sentiment-neutral" style="width:${s.neutral}%"></span><span class="sentiment-negative" style="width:${s.negative}%"></span>`;
+        $("#sentimentValues").innerHTML = `<span>Positivo ${s.positive}%</span><span>Neutro ${s.neutral}%</span><span>Negativo ${s.negative}%</span>`;
+      }
+
+      function renderRadar(items) {
+        const svg = $("#radarChart"), cx=200, cy=168, maxR=112, axes=items.length;
+        const point = (i, ratio, radius=maxR) => { const angle=-Math.PI/2 + i*2*Math.PI/axes; const r=radius*ratio; return [cx+Math.cos(angle)*r, cy+Math.sin(angle)*r]; };
+        let html = "";
+        [0.25,0.5,0.75,1].forEach(level => { const pts=items.map((_,i)=>point(i,level).join(",")).join(" "); html += `<polygon class="radar-grid" points="${pts}"/>`; });
+        items.forEach((_,i) => { const p=point(i,1); html += `<line class="radar-axis" x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}"/>`; });
+        const desired=items.map((_,i)=>point(i,1).join(",")).join(" "); const perceived=items.map((it,i)=>point(i,it.score/100).join(",")).join(" ");
+        html += `<polygon class="radar-desired" points="${desired}"/><polygon class="radar-perceived" points="${perceived}"/>`;
+        items.forEach((it,i) => { const p=point(i,it.score/100); const label=point(i,1,145); html += `<circle class="radar-point" cx="${p[0]}" cy="${p[1]}" r="4"/><text class="radar-label" x="${label[0]}" y="${label[1]+4}">${pretty(it.attr).toUpperCase()}</text>`; });
+        svg.innerHTML = html;
+      }
+
+      function animateScore(target) {
+        const circle=$("#scoreCircle"), number=$("#scoreNumber"), circumference=515;
+        circle.style.strokeDashoffset = String(circumference - circumference * target/100);
+        const start=performance.now(), duration=1250;
+        function tick(now) { const p=clamp((now-start)/duration,0,1); number.textContent=Math.round(target*(1-Math.pow(1-p,3))); if(p<1) requestAnimationFrame(tick); }
+        requestAnimationFrame(tick);
+      }
+      function showToast(message) { const toast=$("#toast"); toast.textContent=message; toast.classList.add("show"); clearTimeout(showToast.timer); showToast.timer=setTimeout(()=>toast.classList.remove("show"),2200); }
+
+      renderInputs();
+      $$('[data-start]').forEach(btn => btn.addEventListener("click", e => { e.preventDefault(); startWizard(1); }));
+      $$('[data-home]').forEach(btn => btn.addEventListener("click", () => showView("homeView")));
+      $("#brandHome").addEventListener("click", e => { e.preventDefault(); showView("homeView"); });
+      $("#demoHome").addEventListener("click", () => populateDemo(true));
+      $("#fillExample").addEventListener("click", () => populateDemo(false));
+      $("#attributeGroups").addEventListener("click", e => { const btn=e.target.closest("[data-attr]"); if(btn) toggleAttribute(btn); });
+      $("#goalGrid").addEventListener("click", e => { const btn=e.target.closest("[data-goal]"); if(btn) chooseGoal(btn); });
+      $$('[data-next]').forEach(btn => btn.addEventListener("click", () => { if(validateStep(state.step)) showStep(Number(btn.dataset.next)); }));
+      $$('[data-prev]').forEach(btn => btn.addEventListener("click", () => showStep(Number(btn.dataset.prev))));
+      $("#feedbackInput").addEventListener("input", () => { updateFeedbackCount(); $("#sampleBadge").textContent=""; });
+      $("#analyzeButton").addEventListener("click", analyze);
+      $("#newAnalysis").addEventListener("click", () => startWizard(1));
+    })();
+  </script>
+</body>
+</html>
+
